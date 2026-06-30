@@ -297,3 +297,39 @@ theorem weierstrassDiscriminant_ne_zero (L : PeriodPair) :
     intro a b
     simp only [periodPair_ω₁, periodPair_ω₂, Equiv.refl_apply]
     field_simp
+
+/-! ### The elliptic curve attached to a period lattice
+
+The Weierstrass equation `℘'² = 4℘³ - g₂℘ - g₃` (`PeriodPair.derivWeierstrassP_sq`) becomes, after
+the substitution `(x, y) = (℘, ½ ℘')`, the short Weierstrass form `y² = x³ - (g₂/4) x - (g₃/4)`.
+We package this as a Mathlib `WeierstrassCurve ℂ` and, using the nonvanishing of the discriminant
+(`weierstrassDiscriminant_ne_zero`), give it the `IsElliptic` instance: it is a genuine elliptic
+curve over `ℂ`, so `j`-invariant and all of the elliptic-curve API become available on it. -/
+
+/-- The (short) **Weierstrass curve** `y² = x³ - (g₂/4) x - (g₃/4)` attached to a period pair `L`.
+It is the image of the Weierstrass equation `℘'² = 4℘³ - g₂℘ - g₃` under `(x, y) = (℘, ½ ℘')`. -/
+def PeriodPair.weierstrassCurve (L : PeriodPair) : WeierstrassCurve ℂ where
+  a₁ := 0
+  a₂ := 0
+  a₃ := 0
+  a₄ := -L.g₂ / 4
+  a₆ := -L.g₃ / 4
+
+/-- The Mathlib discriminant of `L.weierstrassCurve` is the lattice discriminant `g₂³ - 27 g₃²`. -/
+@[simp] lemma PeriodPair.weierstrassCurve_Δ (L : PeriodPair) :
+    L.weierstrassCurve.Δ = weierstrassDiscriminant L := by
+  simp only [WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆,
+    WeierstrassCurve.b₈, PeriodPair.weierstrassCurve, weierstrassDiscriminant]
+  ring
+
+/-- The Weierstrass curve of a period pair is an **elliptic curve**: its discriminant is a unit
+(it is nonzero in the field `ℂ`). -/
+instance (L : PeriodPair) : L.weierstrassCurve.IsElliptic where
+  isUnit := by
+    rw [PeriodPair.weierstrassCurve_Δ]
+    exact isUnit_iff_ne_zero.mpr (weierstrassDiscriminant_ne_zero L)
+
+/-- The discriminant `Δ'` (as a unit) of the elliptic curve of `L` is the lattice discriminant. -/
+lemma PeriodPair.coe_weierstrassCurve_Δ' (L : PeriodPair) :
+    (L.weierstrassCurve.Δ' : ℂ) = weierstrassDiscriminant L := by
+  rw [WeierstrassCurve.coe_Δ', PeriodPair.weierstrassCurve_Δ]
