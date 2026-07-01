@@ -289,14 +289,12 @@ theorem weierstrassDiscriminant_ne_zero (L : PeriodPair) :
     intro a b
     simp only [periodPair_ω₁, periodPair_ω₂, Equiv.prodCongr_apply, Equiv.coe_refl,
       Equiv.neg_apply, Prod.map_apply, id_eq]
-    push_cast
-    field_simp
+    grind
   · -- `(ω₂/ω₁).im > 0`: take `τ = ω₂/ω₁ ∈ ℍ` and the identity reindexing.
     refine ⟨UpperHalfPlane.mk (L.ω₂ / L.ω₁) h, ?_⟩
     apply exists_scalingEquiv_aux L _ (Equiv.refl (ℤ × ℤ))
-    intro a b
-    simp only [periodPair_ω₁, periodPair_ω₂, Equiv.refl_apply]
-    field_simp
+    grind [periodPair_ω₁, periodPair_ω₂]
+
 
 /-! ### The elliptic curve attached to a period lattice
 
@@ -318,9 +316,8 @@ def PeriodPair.weierstrassCurve (L : PeriodPair) : WeierstrassCurve ℂ where
 /-- The Mathlib discriminant of `L.weierstrassCurve` is the lattice discriminant `g₂³ - 27 g₃²`. -/
 @[simp] lemma PeriodPair.weierstrassCurve_Δ (L : PeriodPair) :
     L.weierstrassCurve.Δ = weierstrassDiscriminant L := by
-  simp only [WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆,
+  grind [WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆,
     WeierstrassCurve.b₈, PeriodPair.weierstrassCurve, weierstrassDiscriminant]
-  ring
 
 /-- The Weierstrass curve of a period pair is an **elliptic curve**: its discriminant is a unit
 (it is nonzero in the field `ℂ`). -/
@@ -333,3 +330,179 @@ instance (L : PeriodPair) : L.weierstrassCurve.IsElliptic where
 lemma PeriodPair.coe_weierstrassCurve_Δ' (L : PeriodPair) :
     (L.weierstrassCurve.Δ' : ℂ) = weierstrassDiscriminant L := by
   rw [WeierstrassCurve.coe_Δ', PeriodPair.weierstrassCurve_Δ]
+
+/-! ### The `j`-invariant of the elliptic curve of `L` in terms of `g₂`, `g₃`
+
+The classical modular invariants of the Weierstrass `℘`-function of `L` are `g₂ = 60 G₄` and
+`g₃ = 140 G₆`.  The `j`-invariant of the elliptic curve `L.weierstrassCurve` (Mathlib's
+`WeierstrassCurve.j`) is, classically, `j = 1728 g₂³ / (g₂³ - 27 g₃²)`.  The lemmas below provide
+that bridge: first the `c`-invariants `c₄ = 12 g₂`, `c₆ = 216 g₃`, then the closed form for `j`. -/
+
+/-- The `c₄`-invariant of the elliptic curve `y² = x³ - (g₂/4)x - (g₃/4)` of `L` is `12 g₂`. -/
+@[simp] lemma PeriodPair.weierstrassCurve_c₄ (L : PeriodPair) :
+    L.weierstrassCurve.c₄ = 12 * L.g₂ := by
+  simp only [WeierstrassCurve.c₄, WeierstrassCurve.b₂, WeierstrassCurve.b₄,
+    PeriodPair.weierstrassCurve]
+  ring
+
+/-- The `c₆`-invariant of the elliptic curve `y² = x³ - (g₂/4)x - (g₃/4)` of `L` is `216 g₃`. -/
+@[simp] lemma PeriodPair.weierstrassCurve_c₆ (L : PeriodPair) :
+    L.weierstrassCurve.c₆ = 216 * L.g₃ := by
+  simp only [WeierstrassCurve.c₆, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆,
+    PeriodPair.weierstrassCurve]
+  ring
+
+/-- **The `j`-invariant of the elliptic curve of `L` as a function of the lattice invariants.**
+For the elliptic curve `L.weierstrassCurve` attached to the Weierstrass `℘`-function of `L`, the
+`j`-invariant is the classical expression `1728 g₂³ / (g₂³ - 27 g₃²)` in the modular invariants
+`g₂ = 60 G₄(L)` and `g₃ = 140 G₆(L)`.  (The denominator `g₂³ - 27 g₃²` is the Weierstrass
+discriminant `weierstrassDiscriminant L`, which is nonzero by `weierstrassDiscriminant_ne_zero`.) -/
+theorem PeriodPair.weierstrassCurve_j (L : PeriodPair) :
+    L.weierstrassCurve.j = 1728 * L.g₂ ^ 3 / (L.g₂ ^ 3 - 27 * L.g₃ ^ 2) := by
+  grind [WeierstrassCurve.j, Units.val_inv_eq_inv_val, ← div_eq_inv_mul,
+    WeierstrassCurve.coe_Δ', PeriodPair.weierstrassCurve_Δ, weierstrassDiscriminant,
+    PeriodPair.weierstrassCurve_c₄]
+
+/-- The same identity with the denominator written as the Weierstrass discriminant. -/
+theorem PeriodPair.weierstrassCurve_j_eq_div_discriminant (L : PeriodPair) :
+    L.weierstrassCurve.j = 1728 * L.g₂ ^ 3 / weierstrassDiscriminant L := by
+  rw [PeriodPair.weierstrassCurve_j, weierstrassDiscriminant]
+
+def f := fun τ => (periodPair τ).weierstrassCurve.j
+
+lemma f_eq_j (τ : ℍ) : f τ =
+1728 * (E₄ τ : ℂ) ^ 3 / (E₄ τ ^ 3 - E₆ τ ^ 2) := by
+  have hz : (riemannZeta 4 : ℂ) ≠ 0 := riemannZeta_ne_zero_of_one_lt_re (by norm_num)
+  have ha : (120 * riemannZeta 4 : ℂ) ≠ 0 := mul_ne_zero (by norm_num) hz
+  have ha3 : (120 * riemannZeta 4 : ℂ) ^ 3 ≠ 0 := pow_ne_zero _ ha
+  have hE : (E₄ τ : ℂ) ^ 3 - E₆ τ ^ 2 ≠ 0 := E₄_cube_sub_E₆_sq_ne_zero τ
+  simp only [f, weierstrassCurve_j_eq_div_discriminant, weierstrassDiscriminant_periodPair,
+    g₂_periodPair, mul_pow]
+  field_simp
+
+
+/-! ### Proposition 3.6(b): the uniformization map `φ : ℂ/Λ → E(ℂ)`
+
+Proposition 3.6(b) constructs the map
+`φ : ℂ/Λ ⟶ E(ℂ) ⊂ ℙ²(ℂ),   z ↦ [℘(z), ℘'(z), 1]`
+and asserts it is a complex-analytic **isomorphism of complex Lie groups** — i.e. a bijective
+group homomorphism.
+
+This section constructs `φ` and the group-homomorphism *structure* around it.  In Mathlib's
+affine coordinates the elliptic curve of `L` is `E : y² = x³ - (g₂/4) x - (g₃/4)`
+(`PeriodPair.weierstrassCurve`), and the projective point `[℘, ℘', 1]` corresponds to the affine
+point `(x, y) = (℘, ½℘')`: this is exactly the substitution turning the Weierstrass equation
+`℘'² = 4℘³ - g₂℘ - g₃` (`derivWeierstrassP_sq`) into the curve equation.  The point at infinity
+`[0 : 1 : 0]` is the image of the lattice points (`z ∈ Λ`, where `℘` has its pole).
+
+What is proved sorry-free here:
+* `PeriodPair.toPoint` / `PeriodPair.uniformization` — the map `φ` (as a lift `ℂ → E(ℂ)` and its
+  descent to the quotient `ℂ/Λ`);
+* `PeriodPair.weierstrassCurve_equation` — the image lands on the curve;
+* well-definedness on `ℂ/Λ` (`toPoint_add_mem`, built into the descent);
+* `uniformization_zero` — `φ(0) = O` (the point at infinity), and
+* `uniformization_neg` — `φ(-z) = -φ(z)` (compatibility with negation).
+
+The remaining `map_add'` property (`uniformization_add`) is the analytic **addition theorem** for
+`℘`; it, together with injectivity and surjectivity, needs elliptic-function theory not yet in
+Mathlib and is isolated below as the single `sorry`. -/
+
+open WeierstrassCurve.Affine in
+/-- The image `(℘(z), ½℘'(z))` of a non-lattice point satisfies the Weierstrass equation of the
+curve `E : y² = x³ - (g₂/4) x - (g₃/4)` of `L`.  This is the substitution `(x, y) = (℘, ½℘')`
+applied to `℘'² = 4℘³ - g₂℘ - g₃`. -/
+lemma PeriodPair.weierstrassCurve_equation (L : PeriodPair) {z : ℂ} (hz : z ∉ L.lattice) :
+    L.weierstrassCurve.toAffine.Equation (℘[L] z) (℘'[L] z / 2) := by
+  rw [WeierstrassCurve.Affine.equation_iff]
+  simp only [PeriodPair.weierstrassCurve]
+  linear_combination (L.derivWeierstrassP_sq z hz) / 4
+
+open Classical in
+/-- **The uniformization map `φ`, as a lift `ℂ → E(ℂ)`.**  `z ↦ (℘(z), ½℘'(z))` for `z ∉ Λ`, and
+`z ↦ O` (the point at infinity) for `z ∈ Λ`.  (Nonsingularity of the affine image is automatic on
+an elliptic curve, `equation_iff_nonsingular`.) -/
+def PeriodPair.toPoint (L : PeriodPair) (z : ℂ) : L.weierstrassCurve.toAffine.Point :=
+  if hz : z ∈ L.lattice then 0
+  else .some (℘[L] z) (℘'[L] z / 2)
+    (WeierstrassCurve.Affine.equation_iff_nonsingular.mp (L.weierstrassCurve_equation hz))
+
+/-- **Well-definedness on `ℂ/Λ`.**  `φ` is invariant under translation by a lattice point, because
+`℘` and `℘'` are periodic (`weierstrassP_add_coe`, `derivWeierstrassP_add_coe`). -/
+lemma PeriodPair.toPoint_add_mem (L : PeriodPair) (z : ℂ) (l : L.lattice) :
+    L.toPoint (z + l) = L.toPoint z := by
+  by_cases hz : z ∈ L.lattice
+  · simp only [PeriodPair.toPoint, dif_pos (add_mem hz l.2), dif_pos hz]
+  · have hzl : z + (l : ℂ) ∉ L.lattice := fun h => hz (by simpa using sub_mem h l.2)
+    simp only [PeriodPair.toPoint, dif_neg hzl, dif_neg hz]
+    congr 1
+    · exact L.weierstrassP_add_coe z l
+    · rw [L.derivWeierstrassP_add_coe z l]
+
+/-- **Compatibility with negation.**  `φ(-z) = -φ(z)`, because `℘` is even and `℘'` is odd
+(`weierstrassP_neg`, `derivWeierstrassP_neg`) and negation on `E` is `(x, y) ↦ (x, -y)`. -/
+lemma PeriodPair.toPoint_neg (L : PeriodPair) (z : ℂ) : L.toPoint (-z) = - L.toPoint z := by
+  by_cases hz : z ∈ L.lattice
+  · simp only [PeriodPair.toPoint, dif_pos (neg_mem hz), dif_pos hz, neg_zero]
+  · have hz' : -z ∉ L.lattice := fun h => hz (by simpa using neg_mem h)
+    simp only [PeriodPair.toPoint, dif_neg hz', dif_neg hz,
+      WeierstrassCurve.Affine.Point.neg_some]
+    congr 1
+    · exact L.weierstrassP_neg z
+    · rw [WeierstrassCurve.Affine.negY, L.derivWeierstrassP_neg z]
+      simp only [PeriodPair.weierstrassCurve]
+      ring
+
+/-- **The uniformization map `φ : ℂ/Λ → E(ℂ)`** of Proposition 3.6(b), descended from the lift
+`PeriodPair.toPoint` via its lattice-translation invariance. -/
+def PeriodPair.uniformization (L : PeriodPair) :
+    (ℂ ⧸ L.lattice.toAddSubgroup) → L.weierstrassCurve.toAffine.Point := fun q =>
+  Quotient.liftOn' q L.toPoint (by
+    intro a b hab
+    rw [QuotientAddGroup.leftRel_apply, Submodule.mem_toAddSubgroup] at hab
+    have hmem : b - a ∈ L.lattice := by
+      simpa [sub_eq_neg_add] using hab
+    have h := L.toPoint_add_mem a ⟨b - a, hmem⟩
+    rw [add_sub_cancel] at h
+    exact h.symm)
+
+@[simp] lemma PeriodPair.uniformization_mk (L : PeriodPair) (z : ℂ) :
+    L.uniformization (QuotientAddGroup.mk z) = L.toPoint z := rfl
+
+/-- `φ(O) = O`: the identity `0 ∈ ℂ/Λ` maps to the point at infinity. -/
+@[simp] lemma PeriodPair.uniformization_zero (L : PeriodPair) :
+    L.uniformization 0 = 0 := by
+  show L.toPoint 0 = _
+  simp only [PeriodPair.toPoint, dif_pos (zero_mem _)]
+
+/-- **`φ` respects negation:** `φ(-q) = -φ(q)`. -/
+lemma PeriodPair.uniformization_neg (L : PeriodPair) (q : ℂ ⧸ L.lattice.toAddSubgroup) :
+    L.uniformization (-q) = - L.uniformization q := by
+  induction q using QuotientAddGroup.induction_on with
+  | _ z =>
+    have h : (-(QuotientAddGroup.mk z) : ℂ ⧸ L.lattice.toAddSubgroup)
+        = QuotientAddGroup.mk (-z) := (map_neg (QuotientAddGroup.mk' _) z).symm
+    rw [h, uniformization_mk, uniformization_mk, L.toPoint_neg]
+
+/-! ### The remaining analytic input: the addition theorem
+
+Bundling `φ` as a genuine `AddMonoidHom ℂ/Λ → E(ℂ)` needs additivity
+`φ(z + w) = φ(z) + φ(w)`, i.e. the classical **addition theorem** for the Weierstrass
+`℘`-function matched against the chord–tangent group law on `E`.  Together with injectivity and
+surjectivity, this is the elliptic-function theory that Mathlib does not yet provide, so it is
+recorded here as the single `sorry`.  Everything above is `sorry`-free. -/
+
+/-- **The addition theorem (remaining analytic input).**  `φ` is additive.  A `sorry`-free proof
+needs the ℘-addition formula and the fact that three points `℘(z₁), ℘(z₂), ℘(z₃)` are collinear on
+`E` iff `z₁ + z₂ + z₃ ∈ Λ` — elliptic-function theory not yet in Mathlib. -/
+theorem PeriodPair.uniformization_add (L : PeriodPair)
+    (q p : ℂ ⧸ L.lattice.toAddSubgroup) :
+    L.uniformization (q + p) = L.uniformization q + L.uniformization p := by
+  sorry
+
+/-- **`φ` as an additive group homomorphism `ℂ/Λ → E(ℂ)`** (Proposition 3.6(b), the map together
+with its group-homomorphism structure).  Depends on `uniformization_add`. -/
+def PeriodPair.uniformizationHom (L : PeriodPair) :
+    (ℂ ⧸ L.lattice.toAddSubgroup) →+ L.weierstrassCurve.toAffine.Point where
+  toFun := L.uniformization
+  map_zero' := L.uniformization_zero
+  map_add' := L.uniformization_add
