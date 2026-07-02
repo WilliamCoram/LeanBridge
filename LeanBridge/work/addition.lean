@@ -1,4 +1,4 @@
-import LeanBridge.work.forward
+import LeanBridge.work.addition_euler
 
 /-!
 # Towards the addition theorem for `℘` and additivity of the uniformization map `φ`
@@ -8,7 +8,7 @@ import LeanBridge.work.forward
 The one remaining group-homomorphism property is **additivity** `φ(z+w) = φ(z) + φ(w)`, matching the
 analytic group law on `ℂ/Λ` with the chord–tangent group law on `E`.
 
-This file *starts* on that proof.  The strategy:
+This file *completes* that proof (no `sorry`s remain).  The strategy:
 
 1. **Reduce to a pointwise statement on `ℂ`.**  Since `φ = toPoint ∘ (mk : ℂ → ℂ/Λ)` and `mk` is a
    group homomorphism, additivity of `φ` is equivalent to
@@ -23,16 +23,18 @@ This file *starts* on that proof.  The strategy:
    (`Point.add_of_X_ne`, `slope`, `addX`, `addY`), modulo the two analytic identities
    `weierstrassP_add` / `derivWeierstrassP_add` — the **addition theorem for `℘`**.
 
-## The genuinely missing input
+## The analytic input
 
 `weierstrassP_add` and `derivWeierstrassP_add` are the classical addition formulae for the
-Weierstrass `℘`-function.  Their proof rests on the **valence formula** for elliptic functions
-(a non-zero elliptic function has equally many zeros and poles in a fundamental domain, and the
-sum of its zeros is congruent to the sum of its poles modulo `Λ`), applied to the order-3 elliptic
-function `℘'(u) - (ℓ ℘(u) + c)` cut out by a line.  This elliptic-function theory is **not yet in
-Mathlib**, so those two identities are the `sorry`s isolated below; everything else is derived from
-them.  The doubling (tangent) case and the "vertical line" degenerate case are likewise left as
-`sorry` pending the same input.
+Weierstrass `℘`-function.  Classically these rest on the **valence formula** for elliptic
+functions, which is not yet in Mathlib; instead they are proved sorry-free in
+`LeanBridge.work.addition_euler` by Euler's differential-equation argument
+(`weierstrassP_add_of_euler`, `derivWeierstrassP_add_of_euler`), which needs no contour
+integration.  The same file supplies the fiber lemma
+(`sub_mem_or_add_mem_of_weierstrassP_eq`), the 2-torsion characterisation of the zeros of `℘'`
+(`two_mul_mem_lattice_of_derivWeierstrassP_eq_zero`) and the duplication formulas
+(`weierstrassP_two_mul`, `derivWeierstrassP_two_mul`) used for the doubling (tangent) case of
+`toPoint_add` below.
 -/
 
 open Complex UpperHalfPlane EisensteinSeries ModularForm PeriodPair
@@ -53,29 +55,31 @@ addition formula reads `℘(z+w) = ℓ² - ℘(z) - ℘(w)`.  Matching Mathlib's
 `℘(z) ≠ ℘(w)`,
 `℘(z + w) = ((℘'(z) - ℘'(w)) / (2(℘(z) - ℘(w))))² - ℘(z) - ℘(w)`.
 
-*Analytic input, not yet available in Mathlib* (valence formula for elliptic functions). -/
+Proved in `addition_euler.lean` by Euler's differential-equation argument (no valence formula
+needed). -/
 theorem weierstrassP_add (L : PeriodPair) {z w : ℂ} (hz : z ∉ L.lattice) (hw : w ∉ L.lattice)
     (hzw : z + w ∉ L.lattice) (hx : ℘[L] z ≠ ℘[L] w) :
     ℘[L] (z + w)
-      = ((℘'[L] z - ℘'[L] w) / (2 * (℘[L] z - ℘[L] w))) ^ 2 - ℘[L] z - ℘[L] w := by
-  sorry
+      = ((℘'[L] z - ℘'[L] w) / (2 * (℘[L] z - ℘[L] w))) ^ 2 - ℘[L] z - ℘[L] w :=
+  L.weierstrassP_add_of_euler hz hw hzw hx
 
 /-- **Addition theorem for `℘` (Y-coordinate).**  Companion to `weierstrassP_add`, fixing the sign
 of `℘'(z + w)`: the third intersection of the chord with `E` is `-(φ(z) + φ(w))`, so
 `℘'(z + w) = -((℘'(z) - ℘'(w)) / (℘(z) - ℘(w)) · (℘(z+w) - ℘(z)) + ℘'(z))`.
 
-*Analytic input, not yet available in Mathlib* (valence formula for elliptic functions). -/
+Proved in `addition_euler.lean` by differentiating the X-formula. -/
 theorem derivWeierstrassP_add (L : PeriodPair) {z w : ℂ} (hz : z ∉ L.lattice) (hw : w ∉ L.lattice)
     (hzw : z + w ∉ L.lattice) (hx : ℘[L] z ≠ ℘[L] w) :
     ℘'[L] (z + w)
-      = -((℘'[L] z - ℘'[L] w) / (℘[L] z - ℘[L] w) * (℘[L] (z + w) - ℘[L] z) + ℘'[L] z) := by
-  sorry
+      = -((℘'[L] z - ℘'[L] w) / (℘[L] z - ℘[L] w) * (℘[L] (z + w) - ℘[L] z) + ℘'[L] z) :=
+  L.derivWeierstrassP_add_of_euler hz hw hzw hx
 
 /-! ### `toPoint_add`: additivity of the lift `ℂ → E(ℂ)` -/
 
 /-- **The pointwise additivity of the uniformization lift.**  `toPoint (z + w) = toPoint z +
-toPoint w` for all `z w : ℂ`.  Structural cases (`z`, `w`, or `z + w` in `Λ`) and the generic chord
-case are handled; the doubling and vertical-line cases await the same analytic input. -/
+toPoint w` for all `z w : ℂ`.  Structural cases (`z`, `w`, or `z + w` in `Λ`) use periodicity and
+negation; the chord case matches Mathlib's `add_of_X_ne` via the addition formulae, and the
+doubling case matches `add_of_Y_ne` via the fiber lemma and the duplication formulae. -/
 theorem toPoint_add (L : PeriodPair) (z w : ℂ) :
     L.toPoint (z + w) = L.toPoint z + L.toPoint w := by
   -- Case `z ∈ Λ`: `φ(z) = O` and `z + w ≡ w`.
@@ -100,8 +104,54 @@ theorem toPoint_add (L : PeriodPair) (z w : ℂ) :
   -- Generic position: `z, w, z + w ∉ Λ`.  Both images are affine points.
   simp only [PeriodPair.toPoint, dif_neg hz, dif_neg hw, dif_neg hzw]
   by_cases hxx : ℘[L] z = ℘[L] w
-  · -- Doubling / vertical-line case: needs the tangent addition formula (same analytic input).
-    sorry
+  · -- Doubling case: `℘ z = ℘ w` and `z + w ∉ Λ` force `z ≡ w (mod Λ)` (fiber lemma), so the
+    -- sum is the tangent point at `z`, computed by the duplication formulas.
+    have hsub : z - w ∈ L.lattice :=
+      (L.sub_mem_or_add_mem_of_weierstrassP_eq hz hw hxx).resolve_right hzw
+    have hwz : w - z ∈ L.lattice := by
+      have h := neg_mem hsub
+      rwa [neg_sub] at h
+    have h2z : 2 * z ∉ L.lattice := fun h2z ↦ hzw (by
+      have h : z + w = 2 * z + (w - z) := by ring
+      rw [h]
+      exact add_mem h2z hwz)
+    have hy0 : ℘'[L] z ≠ 0 :=
+      fun h ↦ h2z (L.two_mul_mem_lattice_of_derivWeierstrassP_eq_zero hz h)
+    -- periodicity along `w = z + (w - z)`: `℘' w = ℘' z`, and the sum point is the `2z`-point
+    have hy : ℘'[L] w = ℘'[L] z := by
+      have h := L.derivWeierstrassP_add_coe z ⟨w - z, hwz⟩
+      rwa [show z + ((⟨w - z, hwz⟩ : L.lattice) : ℂ) = w from by
+        show z + (w - z) = w; ring] at h
+    have hPzw : ℘[L] (z + w) = ℘[L] (2 * z) := by
+      have h := L.weierstrassP_add_coe (2 * z) ⟨w - z, hwz⟩
+      rwa [show 2 * z + ((⟨w - z, hwz⟩ : L.lattice) : ℂ) = z + w from by
+        show 2 * z + (w - z) = z + w; ring] at h
+    have hP'zw : ℘'[L] (z + w) = ℘'[L] (2 * z) := by
+      have h := L.derivWeierstrassP_add_coe (2 * z) ⟨w - z, hwz⟩
+      rwa [show 2 * z + ((⟨w - z, hwz⟩ : L.lattice) : ℂ) = z + w from by
+        show 2 * z + (w - z) = z + w; ring] at h
+    -- tangent case of the group law: `y₁ ≠ negY`, since `℘' z ≠ 0`
+    have hyne : ℘'[L] z / 2 ≠ L.weierstrassCurve.toAffine.negY (℘[L] w) (℘'[L] w / 2) := by
+      simp only [WeierstrassCurve.Affine.negY, PeriodPair.weierstrassCurve]
+      rw [hy]
+      intro heq
+      apply hy0
+      linear_combination heq
+    rw [WeierstrassCurve.Affine.Point.add_of_Y_ne hyne]
+    congr 1
+    · -- X-coordinate: the duplication formula `℘(2z) = (℘''/(2℘'))² - 2℘`.
+      rw [WeierstrassCurve.Affine.slope_of_Y_ne hxx hyne]
+      simp only [WeierstrassCurve.Affine.addX, WeierstrassCurve.Affine.negY,
+        PeriodPair.weierstrassCurve]
+      rw [hPzw, L.weierstrassP_two_mul hz h2z, ← hxx]
+      ring_nf
+    · -- Y-coordinate: the duplication formula for `℘'(2z)`.
+      rw [WeierstrassCurve.Affine.addY, WeierstrassCurve.Affine.negY,
+        WeierstrassCurve.Affine.negAddY, WeierstrassCurve.Affine.addX,
+        WeierstrassCurve.Affine.slope_of_Y_ne hxx hyne]
+      simp only [WeierstrassCurve.Affine.negY, PeriodPair.weierstrassCurve]
+      rw [hP'zw, L.derivWeierstrassP_two_mul hz h2z, L.weierstrassP_two_mul hz h2z, ← hxx]
+      ring_nf
   · -- Chord case `℘(z) ≠ ℘(w)`: match Mathlib's `add_of_X_ne`.
     rw [WeierstrassCurve.Affine.Point.add_of_X_ne hxx]
     have hne : ℘[L] z - ℘[L] w ≠ 0 := sub_ne_zero.mpr hxx
@@ -136,5 +186,19 @@ theorem uniformization_add_of_toPoint_add (L : PeriodPair)
       have hmk : (QuotientAddGroup.mk z + QuotientAddGroup.mk w : ℂ ⧸ L.lattice.toAddSubgroup)
           = QuotientAddGroup.mk (z + w) := (map_add (QuotientAddGroup.mk' _) z w).symm
       rw [hmk, uniformization_mk, uniformization_mk, uniformization_mk, L.toPoint_add]
+
+/-- **The addition theorem.**  `φ` is additive.  (Moved here from `forward.lean`, where it was
+the single remaining `sorry`; it is now a direct consequence of `toPoint_add`.) -/
+theorem uniformization_add (L : PeriodPair) (q p : ℂ ⧸ L.lattice.toAddSubgroup) :
+    L.uniformization (q + p) = L.uniformization q + L.uniformization p :=
+  L.uniformization_add_of_toPoint_add q p
+
+/-- **`φ` as an additive group homomorphism `ℂ/Λ → E(ℂ)`** (Proposition 3.6(b), the map together
+with its group-homomorphism structure).  Sorry-free. -/
+def uniformizationHom (L : PeriodPair) :
+    (ℂ ⧸ L.lattice.toAddSubgroup) →+ L.weierstrassCurve.toAffine.Point where
+  toFun := L.uniformization
+  map_zero' := L.uniformization_zero
+  map_add' := L.uniformization_add
 
 end PeriodPair

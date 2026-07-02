@@ -227,3 +227,14 @@ theorem exists_periodPair_g₂_g₃ {A B : ℂ} (h : 4 * A ^ 3 + 27 * B ^ 2 ≠ 
       refine ⟨scaledPair τ hα, ?_, ?_⟩
       · rw [g₂_scaledPair τ hα, ← hP4, inv_mul_cancel_left₀ (pow_ne_zero 4 hα)]
       · rw [g₃_scaledPair τ hα, ← hP6, inv_mul_cancel_left₀ (pow_ne_zero 6 hα)]
+
+/-- **Corollary 4.3 (uniformization, curve form).**  Every short elliptic curve
+`y² = x³ + A x + B` over `ℂ` (i.e. with `4A³ + 27B² ≠ 0`) arises from a period lattice: there is
+a `PeriodPair` `L` whose attached Weierstrass curve `y² = x³ - (g₂/4) x - (g₃/4)` is exactly the
+given curve. -/
+theorem exists_periodPair_weierstrassCurve_eq {A B : ℂ} (h : 4 * A ^ 3 + 27 * B ^ 2 ≠ 0) :
+    ∃ L : PeriodPair, L.weierstrassCurve = targetCurve A B := by
+  obtain ⟨L, hg₂, hg₃⟩ := exists_periodPair_g₂_g₃ h
+  refine ⟨L, ?_⟩
+  simp only [PeriodPair.weierstrassCurve, targetCurve, hg₂, hg₃, WeierstrassCurve.mk.injEq]
+  norm_num

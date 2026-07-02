@@ -403,9 +403,10 @@ What is proved sorry-free here:
 * `uniformization_zero` — `φ(0) = O` (the point at infinity), and
 * `uniformization_neg` — `φ(-z) = -φ(z)` (compatibility with negation).
 
-The remaining `map_add'` property (`uniformization_add`) is the analytic **addition theorem** for
-`℘`; it, together with injectivity and surjectivity, needs elliptic-function theory not yet in
-Mathlib and is isolated below as the single `sorry`. -/
+The remaining `map_add'` property is the analytic **addition theorem** for `℘`.  It is proved in
+`LeanBridge.work.addition_euler` (Euler's differential-equation argument) and assembled in
+`LeanBridge.work.addition`, where `φ` is upgraded to the `AddMonoidHom`
+`PeriodPair.uniformizationHom`. -/
 
 open WeierstrassCurve.Affine in
 /-- The image `(℘(z), ½℘'(z))` of a non-lattice point satisfies the Weierstrass equation of the
@@ -483,26 +484,11 @@ lemma PeriodPair.uniformization_neg (L : PeriodPair) (q : ℂ ⧸ L.lattice.toAd
         = QuotientAddGroup.mk (-z) := (map_neg (QuotientAddGroup.mk' _) z).symm
     rw [h, uniformization_mk, uniformization_mk, L.toPoint_neg]
 
-/-! ### The remaining analytic input: the addition theorem
+/-! ### The addition theorem
 
 Bundling `φ` as a genuine `AddMonoidHom ℂ/Λ → E(ℂ)` needs additivity
 `φ(z + w) = φ(z) + φ(w)`, i.e. the classical **addition theorem** for the Weierstrass
-`℘`-function matched against the chord–tangent group law on `E`.  Together with injectivity and
-surjectivity, this is the elliptic-function theory that Mathlib does not yet provide, so it is
-recorded here as the single `sorry`.  Everything above is `sorry`-free. -/
-
-/-- **The addition theorem (remaining analytic input).**  `φ` is additive.  A `sorry`-free proof
-needs the ℘-addition formula and the fact that three points `℘(z₁), ℘(z₂), ℘(z₃)` are collinear on
-`E` iff `z₁ + z₂ + z₃ ∈ Λ` — elliptic-function theory not yet in Mathlib. -/
-theorem PeriodPair.uniformization_add (L : PeriodPair)
-    (q p : ℂ ⧸ L.lattice.toAddSubgroup) :
-    L.uniformization (q + p) = L.uniformization q + L.uniformization p := by
-  sorry
-
-/-- **`φ` as an additive group homomorphism `ℂ/Λ → E(ℂ)`** (Proposition 3.6(b), the map together
-with its group-homomorphism structure).  Depends on `uniformization_add`. -/
-def PeriodPair.uniformizationHom (L : PeriodPair) :
-    (ℂ ⧸ L.lattice.toAddSubgroup) →+ L.weierstrassCurve.toAffine.Point where
-  toFun := L.uniformization
-  map_zero' := L.uniformization_zero
-  map_add' := L.uniformization_add
+`℘`-function matched against the chord–tangent group law on `E`.  This is proved downstream:
+the analytic input lives in `LeanBridge.work.addition_euler` (sorry-free), and
+`LeanBridge.work.addition` assembles it into `PeriodPair.uniformization_add` and the
+`AddMonoidHom` `PeriodPair.uniformizationHom`.  Everything in this file is `sorry`-free. -/
