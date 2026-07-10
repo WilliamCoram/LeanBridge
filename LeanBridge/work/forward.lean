@@ -1,4 +1,7 @@
-import Mathlib
+import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+import Mathlib.AlgebraicTopology.SimplexCategory.Basic
+import Mathlib.Analysis.SpecialFunctions.Elliptic.Weierstrass
+import Mathlib.NumberTheory.ModularForms.LevelOne.GradedRing
 
 open PeriodPair
 
